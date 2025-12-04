@@ -26,14 +26,17 @@ public class AuthService {
     @Transactional
     public SignupResponse signup(SignupRequest signupRequest) {
 
-        String encodedPassword = passwordEncoder.encode(signupRequest.getPassword());
-
-        UserRole userRole = UserRole.of(signupRequest.getUserRole());
-
+        // 1.먼저 이메일 중복 체크 (Early Return)
         if (userRepository.existsByEmail(signupRequest.getEmail())) {
             throw new InvalidRequestException("이미 존재하는 이메일입니다.");
         }
 
+        // 2️. 검증 통과 후 비용이 큰 작업 수행
+        String encodedPassword = passwordEncoder.encode(signupRequest.getPassword());
+
+        UserRole userRole = UserRole.of(signupRequest.getUserRole());
+
+        // 3️. User 생성 및 저장
         User newUser = new User(
                 signupRequest.getEmail(),
                 encodedPassword,
@@ -41,6 +44,7 @@ public class AuthService {
         );
         User savedUser = userRepository.save(newUser);
 
+        // 4️. JWT 토큰 생성 및 응답
         String bearerToken = jwtUtil.createToken(savedUser.getId(), savedUser.getEmail(), userRole);
 
         return new SignupResponse(bearerToken);
