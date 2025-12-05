@@ -35,7 +35,9 @@ public class ManagerService {
         Todo todo = todoRepository.findById(todoId)
                 .orElseThrow(() -> new InvalidRequestException("Todo not found"));
 
-        if (!ObjectUtils.nullSafeEquals(user.getId(), todo.getUser().getId())) {
+        // 문제: todo.getUser()가 null이면 NPE 발생!
+        // 최선: null 체크 조건을 추가하고, 한 줄로 처리했다.
+        if (todo.getUser() == null || !ObjectUtils.nullSafeEquals(user.getId(), todo.getUser().getId())) {
             throw new InvalidRequestException("일정을 생성한 유저만 담당자를 지정할 수 있습니다.");
         }
 
